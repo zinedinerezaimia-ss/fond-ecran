@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Fond ecran clip</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  #player-wrap { position: fixed; inset: 0; pointer-events: none; }
+  /* La vidéo remplit tout l'écran sans bandes noires (format 16:9) */
+  #player {
+    position: absolute; top: 50%; left: 50%;
+    width: 100vw; height: 56.25vw;
+    min-height: 100vh; min-width: 177.78vh;
+    transform: translate(-50%, -50%);
+  }
+</style>
+</head>
+<body>
+<div id="player-wrap"><div id="player"></div></div>
+
+<script>
+  // ===== RÉGLAGES =====
+  const VIDEO_ID = "Zl64MRAqQxk"; // identifiant de la vidéo YouTube
+  const DEBUT = 0;                // début de la boucle (en secondes)
+  const FIN = 110;                // fin de la boucle : 1 min 50 = 110 secondes
+  // ====================
+
+  const tag = document.createElement("script");
+  tag.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(tag);
+
+  let player;
+  function onYouTubeIframeAPIReady() {
+    player = new YT.Player("player", {
+      videoId: VIDEO_ID,
+      playerVars: {
+        autoplay: 1, mute: 1, controls: 0, disablekb: 1,
+        modestbranding: 1, rel: 0, iv_load_policy: 3,
+        playsinline: 1, start: DEBUT
+      },
+      events: {
+        onReady: (e) => {
+          e.target.mute();
+          e.target.setPlaybackQuality("highres"); // demande la meilleure qualité dispo
+          e.target.playVideo();
+        },
+        onStateChange: (e) => {
+          // Si la vidéo s'arrête ou finit, on relance au début
+          if (e.data === YT.PlayerState.ENDED || e.data === YT.PlayerState.PAUSED) {
+            player.seekTo(DEBUT, true);
+            player.playVideo();
+          }
+        }
+      }
+    });
+
+    // Vérifie la position toutes les 250 ms et reboucle à 1:50
+    setInterval(() => {
+      if (player && player.getCurrentTime && player.getCurrentTime() >= FIN) {
+        player.seekTo(DEBUT, true);
+      }
+    }, 250);
+  }
+</script>
+</body>
+</html>
